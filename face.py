@@ -74,15 +74,6 @@ def create_connection():
     return connection
 
 
-def is_anomaly(total_time):
-    if total_time is not None:
-        hours, minutes = total_time.split(':')
-        total_hours = int(hours) + int(minutes) / 60
-        if total_hours < 8:
-            return True
-    return False
-
-
 # Function to create the attendance and time tables if they don't exist
 def create_tables(connection):
     try:
@@ -144,11 +135,18 @@ def calculate_total_time(intime, outtime):
     return total_time
 
 
+def is_anomaly(total_time):
+    if total_time is not None:
+        hours, minutes = total_time.split(':')
+        total_hours = int(hours) + int(minutes) / 60
+        if total_hours < 8:
+            return True
+    return False
+
+
 def takeAttendance(name, connection):
     today = date.today()
-    # now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     now = datetime.now()
-
 
     try:
         cursor = connection.cursor()
@@ -183,6 +181,9 @@ def takeAttendance(name, connection):
             cursor.execute(insert_query, (name, now))
             connection.commit()
             print("Intime recorded successfully")
+            
+            # # Retrieve the newly inserted time_id
+            # time_id = cursor.lastrowid
 
         # Get the updated intime and outtime for calculating total time
         cursor.execute(select_query, (name, today))
@@ -231,8 +232,6 @@ def takeAttendance(name, connection):
 
     except Error as e:
         print(f"The error '{e}' occurred while inserting attendance record")
-
-
 
 
 
