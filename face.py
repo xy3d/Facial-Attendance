@@ -74,33 +74,115 @@ def create_connection():
     return connection
 
 
-# Function to create the attendance table if it doesn't exist
-def create_table(connection):
+# Function to create the attendance and time tables if they don't exist
+def create_tables(connection):
     try:
         cursor = connection.cursor()
-        create_table_query = """
+        create_attendance_table_query = """
         CREATE TABLE IF NOT EXISTS attendance (
             id INT AUTO_INCREMENT PRIMARY KEY,
             name VARCHAR(255) NOT NULL,
             time DATETIME NOT NULL
         )
         """
-        cursor.execute(create_table_query)
+        cursor.execute(create_attendance_table_query)
+        create_time_table_query = """
+        CREATE TABLE IF NOT EXISTS time (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            name VARCHAR(255) NOT NULL,
+            intime DATETIME NOT NULL,
+            outtime DATETIME,
+            totaltime VARCHAR(10)
+        )
+        """
+        cursor.execute(create_time_table_query)
         connection.commit()
-        print("Attendance table created successfully")
+        print("Attendance and Time tables created successfully")
     except Error as e:
-        print(f"The error '{e}' occurred while creating the attendance table")
+        print(f"The error '{e}' occurred while creating the tables")
 
 
-# Function to take attendance and insert into the MySQL database
+# Function to calculate the total time in the office
+def calculate_total_time(intime, outtime):
+    if outtime is None:
+        return None
+
+    time_format = '%H:%M'
+    intime_str = intime.strftime('%Y-%m-%d %H:%M:%S')
+    outtime_str = outtime.strftime('%Y-%m-%d %H:%M:%S')
+
+    intime_obj = datetime.strptime(intime_str, '%Y-%m-%d %H:%M:%S')
+    outtime_obj = datetime.strptime(outtime_str, '%Y-%m-%d %H:%M:%S')
+
+    # Calculate the time difference
+    time_diff = outtime_obj - intime_obj
+
+    # Format the total time as HH:MM
+    total_time = (datetime.min + time_diff).time().strftime(time_format)
+
+    return total_time
+
+
+
+# Function to take attendance and update the time table
 def takeAttendance(name, connection):
     today = date.today()
-    # now = datetime.now().strftime('%H:%M:%S')
     now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
     try:
         cursor = connection.cursor()
-        insert_query = """
+
+        # Check if the employee has an existing entry for the current date
+        select_query = """
+        SELECT id, intime, outtime
+        FROM time
+        WHERE name = %s
+        AND DATE(intime) = %s
+        """
+        cursor.execute(select_query, (name, today))
+        result = cursor.fetchone()
+
+        if result:
+            # If the employee already has an entry, update the outtime
+            time_id, intime, _ = result
+            update_query = """
+            UPDATE time
+            SET outtime = %s
+            WHERE id = %s
+            """
+            cursor.execute(update_query, (now, time_id))
+            connection.commit()
+            print("Outtime updated successfully")
+        else:
+            # If the employee doesn't have an entry, insert a new row with intime
+            insert_query = """
+            INSERT INTO time (name, intime)
+            VALUES (%s, %s)
+            """
+            cursor.execute(insert_query, (name, now))
+            connection.commit()
+            print("Intime recorded successfully")
+
+        # Get the updated intime and outtime for calculating total time
+        cursor.execute(select_query, (name, today))
+        updated_result = cursor.fetchone()
+        _, updated_intime, updated_outtime = updated_result
+
+        # Calculate the total time
+        total_time = calculate_total_time(updated_intime, updated_outtime)
+
+        # Update the totaltime column
+        update_total_time_query = """
+        UPDATE time
+        SET totaltime = %s
+        WHERE id = %s
+        """
+        cursor.execute(update_total_time_query, (total_time, time_id))
+        connection.commit()
+        print("Total time updated successfully")
+
+        # Insert the attendance record
+        insert_attendance_query = """
         INSERT INTO attendance (name, time)
         SELECT %s, %s
         FROM DUAL
@@ -111,18 +193,19 @@ def takeAttendance(name, connection):
             AND time > DATE_SUB(NOW(), INTERVAL 900 SECOND)
         )
         """
-        cursor.execute(insert_query, (name, now, name))
+        cursor.execute(insert_attendance_query, (name, now, name))
         connection.commit()
         print("Attendance recorded successfully")
     except Error as e:
         print(f"The error '{e}' occurred while inserting attendance record")
 
 
+
 # Main function to connect to the database and perform attendance operations
 def main():
     connection = create_connection()
     if connection is not None:
-        create_table(connection)
+        create_tables(connection)
         # Close the connection
         if connection.is_connected():
             connection.close()
