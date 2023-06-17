@@ -173,7 +173,7 @@ def takeAttendance(name, connection):
             connection.commit()
             print("Outtime updated successfully")
         else:
-            # If the employee doesn't have an entry, insert a new row with intime
+            # If the employee doesn't have an entry for the current date, insert a new row with intime
             insert_query = """
             INSERT INTO time (name, intime)
             VALUES (%s, %s)
@@ -182,8 +182,8 @@ def takeAttendance(name, connection):
             connection.commit()
             print("Intime recorded successfully")
             
-            # # Retrieve the newly inserted time_id
-            # time_id = cursor.lastrowid
+            # Retrieve the newly inserted time_id
+            time_id = cursor.lastrowid
 
         # Get the updated intime and outtime for calculating total time
         cursor.execute(select_query, (name, today))
