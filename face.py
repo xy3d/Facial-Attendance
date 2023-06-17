@@ -74,6 +74,15 @@ def create_connection():
     return connection
 
 
+def is_anomaly(total_time):
+    if total_time is not None:
+        hours, minutes = total_time.split(':')
+        total_hours = int(hours) + int(minutes) / 60
+        if total_hours < 8:
+            return True
+    return False
+
+
 # Function to create the attendance and time tables if they don't exist
 def create_tables(connection):
     try:
@@ -96,10 +105,22 @@ def create_tables(connection):
         )
         """
         cursor.execute(create_time_table_query)
+        create_anomaly_table_query = """
+        CREATE TABLE IF NOT EXISTS anomaly (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            name VARCHAR(255) NOT NULL,
+            intime DATETIME NOT NULL,
+            outtime DATETIME,
+            totaltime VARCHAR(10),
+            date DATE NOT NULL
+        )
+        """
+        cursor.execute(create_anomaly_table_query)
         connection.commit()
-        print("Attendance and Time tables created successfully")
+        print("Attendance, Time, and Anomaly tables created successfully")
     except Error as e:
         print(f"The error '{e}' occurred while creating the tables")
+
 
 
 # Function to calculate the total time in the office
@@ -123,18 +144,18 @@ def calculate_total_time(intime, outtime):
     return total_time
 
 
-
-# Function to take attendance and update the time table
 def takeAttendance(name, connection):
     today = date.today()
-    now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    # now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    now = datetime.now()
+
 
     try:
         cursor = connection.cursor()
 
         # Check if the employee has an existing entry for the current date
         select_query = """
-        SELECT id, intime, outtime
+        SELECT id, intime, outtime, totaltime
         FROM time
         WHERE name = %s
         AND DATE(intime) = %s
@@ -144,7 +165,7 @@ def takeAttendance(name, connection):
 
         if result:
             # If the employee already has an entry, update the outtime
-            time_id, intime, _ = result
+            time_id, intime, _, total_time = result
             update_query = """
             UPDATE time
             SET outtime = %s
@@ -166,7 +187,7 @@ def takeAttendance(name, connection):
         # Get the updated intime and outtime for calculating total time
         cursor.execute(select_query, (name, today))
         updated_result = cursor.fetchone()
-        _, updated_intime, updated_outtime = updated_result
+        _, updated_intime, updated_outtime, total_time = updated_result
 
         # Calculate the total time
         total_time = calculate_total_time(updated_intime, updated_outtime)
@@ -196,8 +217,22 @@ def takeAttendance(name, connection):
         cursor.execute(insert_attendance_query, (name, now, name))
         connection.commit()
         print("Attendance recorded successfully")
+
+        # Check if the total time is an anomaly and occurred more than 24 hours ago
+        if total_time and is_anomaly(total_time) and (now - updated_intime) > timedelta(hours=24):
+            # Insert the anomaly record
+            insert_anomaly_query = """
+            INSERT INTO anomaly (name, intime, outtime, totaltime, date)
+            VALUES (%s, %s, %s, %s, %s)
+            """
+            cursor.execute(insert_anomaly_query, (name, updated_intime, updated_outtime, total_time, today))
+            connection.commit()
+            print("Anomaly recorded successfully")
+
     except Error as e:
         print(f"The error '{e}' occurred while inserting attendance record")
+
+
 
 
 
