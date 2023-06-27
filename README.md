@@ -1,60 +1,71 @@
-# Facial Attendance with API and SQL integration
+# Facial Attendance System with API and Database Integration
 
-This repository contains two Python scripts: one for face recognition using OpenCV and Haar cascades, and another for capturing images using a webcam.
+This repository contains two Python scripts: one for **Facial Attendance** using OpenCV and Haar cascades, and another for collecting data.
 
-## Requirements
+## Data Collector
 
-- Python 3.x
-- OpenCV (cv2)
-- Flask
-- mysql-connector-python
+<details>
+  <summary><strong>Click for detailed instructions</strong></summary>
 
-## Usage
+### Prerequisites
 
-### Image Capture
+Make sure you have the required dependencies installed by running the following command:
 
-1. Make sure you have the required dependencies installed by running the following command:
-   ```shell
-   pip install opencv-python
-   
-2. Clone or download this repository.
+```shell
+pip install opencv-python
+```
 
-3. Open the terminal or command prompt and navigate to the repository's directory.
+### Instructions
 
-4. Run the following command to start the image capture script:
-
-   ```shell
-   python image_capture.py
-   
-5. Enter the name of the person you want to capture images for. Repeat this step to capture images for multiple persons.
-
-6. The script will capture 20 images using the webcam and save them in the data folder, organized by person name.
-
-7. Press 'q' to quit capturing images and move to the next person.
-
-Note: Repeat steps to capture images for additional persons.
-
-
-### Face Attendance
-1. Make sure you have the required dependencies installed by running the following command:
-
-   ```shell
-   pip install opencv-python flask mysql-connector-python
+1. Clone or download this repository.
 
 2. Open the terminal or command prompt and navigate to the repository's directory.
 
-Run the following command to start the face recognition application:
+3. Run the following command to start the image capture script:
 
-shell
-Copy code
+```shell
+python image_capture.py
+```
+
+4. Enter the name of the person you want to capture images for.
+
+5. The script will capture 20 images using the webcam and save them in the `data` folder, organized by person name.
+
+6. Press 'q' to quit capturing images and move to the next person.
+</details>
+
+## Facial Attendance
+
+<details>
+  <summary><strong>Click for detailed instructions</strong></summary>
+
+### Prerequisites
+
+Make sure you have the required dependencies installed by running the following command:
+
+```shell
+pip install opencv-python flask mysql-connector-python
+```
+
+### Instructions
+
+1. Open the terminal or command prompt and navigate to the repository's directory.
+
+2. Run the following command to start the **Facial Attendance** application:
+
+```shell
 python face_recognition.py
-Access the application by opening a web browser and visiting http://localhost:5000.
+```
 
-The webcam stream will be displayed, and the application will attempt to recognize faces based on the provided images in the data folder.
+3. Access the application by opening a web browser and visiting `http://localhost:5000`.
 
-Detected faces will be highlighted in green, and recognized persons will be displayed with their names and matching percentages. Unknown faces will be marked as "Unknown".
+4. The webcam stream will be displayed, and the application will attempt to recognize faces based on the provided images in the `data` folder.
 
-The application will also log the attendance and record anomalies in a MySQL database.
+5. **Detected** faces will be highlighted in **Green**, and recognized persons will be displayed with their **name** and matching **percentage**. Unknown faces will be highlighted in **Red** and marked as "Unknown".
 
-License
-This project is licensed under the MIT License.
+6. The application will also log the **Attendance, In/Out time log, and Record Anomalies** in a MySQL database.
+</details>
+
+## License
+
+This project is licensed under the [MIT License](LICENSE).
