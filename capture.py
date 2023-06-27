@@ -19,8 +19,8 @@ def capture_images(name, output_folder):
         # Display the frame
         cv2.imshow('Capture Images', frame)
 
-        # Introduce a delay of 0.33 seconds
-        time.sleep(0.33)
+        # Introduce a delay of 0.5 seconds
+        time.sleep(0.5)
 
         # Save the frame as an image
         image_path = os.path.join(person_folder, f'{name}_{count}.jpg')

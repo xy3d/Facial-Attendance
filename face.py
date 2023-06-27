@@ -250,17 +250,19 @@ def gen():
                     diff_mean = np.mean(diff)
                     matching_percentage = (1 - diff_mean / 255) * 100
 
-                    if matching_percentage > 80:
+                    if matching_percentage > 50:
                         takeAttendance(person_folder, connection)
                         cv2.rectangle(img, (x, y), (x + w, y + h), (0, 255, 0), 3)
                         cv2.putText(img, f"{person_folder} ({matching_percentage:.2f}%)", (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 255, 0), 2)
                         match_found = True
+                        print(f"Detected: {person_folder} ({matching_percentage:.2f}%)")
                         break
 
                 if not match_found:
                     # If no match is found, display "Unknown"
                     cv2.rectangle(img, (x, y), (x + w, y + h), (0, 0, 255), 3)
                     cv2.putText(img, "Unknown", (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 0, 255), 2)
+                    print("Detected: Unknown")
 
         elif consecutive_frames_detected < consecutive_frames_required:
             # Reset the match_found flag and consecutive_frames_detected counter
