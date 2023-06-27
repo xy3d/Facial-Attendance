@@ -1,4 +1,4 @@
-# Face Recognition and Image Capture
+# Facial Attendance with API and SQL integration
 
 This repository contains two Python scripts: one for face recognition using OpenCV and Haar cascades, and another for capturing images using a webcam.
 
@@ -16,34 +16,32 @@ This repository contains two Python scripts: one for face recognition using Open
 1. Make sure you have the required dependencies installed by running the following command:
    ```shell
    pip install opencv-python
-Clone or download this repository.
+   
+2. Clone or download this repository.
 
-Open the terminal or command prompt and navigate to the repository's directory.
+3. Open the terminal or command prompt and navigate to the repository's directory.
 
-Run the following command to start the image capture script:
+4. Run the following command to start the image capture script:
 
-shell
-Copy code
-python image_capture.py
-Enter the name of the person you want to capture images for. Repeat this step to capture images for multiple persons.
+   ```shell
+   python image_capture.py
+   
+5. Enter the name of the person you want to capture images for. Repeat this step to capture images for multiple persons.
 
-The script will capture 20 images using the webcam and save them in the data folder, organized by person name.
+6. The script will capture 20 images using the webcam and save them in the data folder, organized by person name.
 
-Press 'q' to quit capturing images and move to the next person.
+7. Press 'q' to quit capturing images and move to the next person.
 
-Repeat steps 5-7 to capture images for additional persons.
+Note: Repeat steps to capture images for additional persons.
 
-Image capture will be completed once images are captured for all desired persons.
 
-Face Recognition
-Make sure you have the required dependencies installed by running the following command:
+### Face Attendance
+1. Make sure you have the required dependencies installed by running the following command:
 
-shell
-Copy code
-pip install opencv-python flask mysql-connector-python
-Clone or download this repository.
+   ```shell
+   pip install opencv-python flask mysql-connector-python
 
-Open the terminal or command prompt and navigate to the repository's directory.
+2. Open the terminal or command prompt and navigate to the repository's directory.
 
 Run the following command to start the face recognition application:
 
