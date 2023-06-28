@@ -2,14 +2,13 @@ import cv2
 import numpy as np
 import os
 from datetime import datetime, date, timedelta
-from flask import Flask, render_template, Response
+from flask import Flask, render_template, Response, jsonify
 import mysql.connector
 from mysql.connector import Error
 
 
 UPLOAD_FOLDER = 'data'
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
-
 
 app = Flask(__name__)
 app.secret_key = "secret key"
@@ -18,14 +17,74 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 # Function to check if the file has an allowed extension
 def allowed_file(filename):
-    return '.' in filename and \
-           filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 
 @app.route('/')
 def index():
     """Video streaming home page."""
     return render_template('index.html')
+
+
+# @app.route('/dashboard')
+# def dashboard():
+#     """Dashboard page."""
+#     connection = create_connection()
+#     attendance_data = get_table_data(connection, 'attendance')
+#     time_data = get_table_data(connection, 'time')
+#     anomaly_data = get_table_data(connection, 'anomaly')
+#     return jsonify({
+#         'attendance': attendance_data,
+#         'time': time_data,
+#         'anomaly': anomaly_data
+#     })
+
+
+@app.route('/dashboard')
+def dashboard():
+    """Dashboard page."""
+    connection = mysql.connector.connect(
+            host='JAYED',
+            database='attendance',
+            user='jayed',
+            password='1234'
+    )  # Replace with your actual MySQL connection details
+
+    cursor = connection.cursor()
+
+    # Fetch data from the 'attendance' table
+    cursor.execute('SELECT * FROM attendance')
+    attendance_data = cursor.fetchall()
+
+    # Fetch data from the 'time' table
+    cursor.execute('SELECT * FROM time')
+    time_data = cursor.fetchall()
+
+    # Fetch data from the 'anomaly' table
+    cursor.execute('SELECT * FROM anomaly')
+    anomaly_data = cursor.fetchall()
+
+    cursor.close()
+    connection.close()
+
+    return render_template('dashboard.html', attendance_data=attendance_data, time_data=time_data, anomaly_data=anomaly_data)
+
+
+# Function to fetch data from a table in the database
+def get_table_data(connection, table_name):
+    try:
+        cursor = connection.cursor()
+        select_query = f"SELECT * FROM {table_name}"
+        cursor.execute(select_query)
+        rows = cursor.fetchall()
+        column_names = [desc[0] for desc in cursor.description]
+        data = []
+        for row in rows:
+            data.append(dict(zip(column_names, row)))
+        return data
+    except Error as e:
+        print(f"The error '{e}' occurred while fetching data from the table {table_name}")
+        return []
 
 
 # Function to establish a connection with the MySQL database
@@ -81,6 +140,22 @@ def create_tables(connection):
         print("Attendance, Time, and Anomaly tables created successfully")
     except Error as e:
         print(f"The error '{e}' occurred while creating the tables")
+
+
+# Function to retrieve attendance data from the database
+def get_attendance_data(connection):
+    try:
+        cursor = connection.cursor()
+        select_query = """
+        SELECT *
+        FROM attendance
+        ORDER BY time DESC
+        """
+        cursor.execute(select_query)
+        attendance_data = cursor.fetchall()
+        return attendance_data
+    except Error as e:
+        print(f"The error '{e}' occurred while retrieving attendance data")
 
 
 # Function to calculate the total time in the office
@@ -250,7 +325,7 @@ def gen():
                     diff_mean = np.mean(diff)
                     matching_percentage = (1 - diff_mean / 255) * 100
 
-                    if matching_percentage > 50:
+                    if matching_percentage > 80:
                         takeAttendance(person_folder, connection)
                         cv2.rectangle(img, (x, y), (x + w, y + h), (0, 255, 0), 3)
                         cv2.putText(img, f"{person_folder} ({matching_percentage:.2f}%)", (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 255, 0), 2)
@@ -276,15 +351,13 @@ def gen():
     cap.release()
 
 
-
 @app.route('/video_feed')
 def video_feed():
     """Video streaming route. Put this in the src attribute of an img tag."""
-    return Response(gen(),
-                    mimetype='multipart/x-mixed-replace; boundary=frame')
+    return Response(gen(), mimetype='multipart/x-mixed-replace; boundary=frame')
 
 
 if __name__ == '__main__':
     connection = create_connection()
     create_tables(connection)
-    app.run(debug=True)
+    app.run(debug=True, host='0.0.0.0', port=5000)
